@@ -1,39 +1,53 @@
 package com.droidbreath.buybread.ui.activities;
 
+/*
+* Comments show how to use RecycleView
+* Add to dependencies in build.gradle:
+* compile 'com.android.support:recyclerview-v7:23.4.0'
+ */
+
 import android.app.Dialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView; //* Add library to use it */
 import android.view.View;
 import android.widget.EditText;
 
 import com.droidbreath.buybread.R;
-import com.droidbreath.buybread.data.ItemToBuy;
-import com.droidbreath.buybread.ui.adapters.ItemAdapter;
+import com.droidbreath.buybread.data.ItemToBuy; //* Create class to hold data of one element */
+import com.droidbreath.buybread.ui.adapters.ItemAdapter; //* Create adapter to connect data and element view */
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RecyclerView mRecyclerView;
-    private List<ItemToBuy> mItems;
-    private ItemAdapter mItemAdapter;
     private Dialog mDialog;
     private EditText mNewItemName;
+
+    //* Declare variables to get access to needed data and classes: */
+    private RecyclerView mRecyclerView;
+    private ItemAdapter mItemAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Add RecycleView tag to main screen:
         mRecyclerView = (RecyclerView) findViewById(R.id.shopping_list);
 
+        // Give it layout manager, so it can position elements correctly:
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(linearLayoutManager);
-        loadItems();
 
+        // Load data and set adapter:
+        List<ItemToBuy> items = loadItems();
+        mItemAdapter = new ItemAdapter(items);
+        mRecyclerView.setAdapter(mItemAdapter);
+
+        // Some additional things to create new item (make it as u want, if needed):
         mDialog = new Dialog(MainActivity.this);
         mDialog.setTitle("To buy:");
         mDialog.setContentView(R.layout.dialog_add_item);
@@ -65,15 +79,16 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void loadItems() {
-        //TODO: load data
-        mItems = new ArrayList<>();
+    /**
+     * Loads data to initialize shopping list
+     * @return list with elements for RecycleView
+     */
+    private List<ItemToBuy> loadItems() {
+        List<ItemToBuy> items = new ArrayList<>();
         for (int i = 1; i < 7; i++){
-            mItems.add(new ItemToBuy("Task #" + i));
+            items.add(new ItemToBuy("Task #" + i));
         }
-
-        mItemAdapter = new ItemAdapter(mItems);
-        mRecyclerView.setAdapter(mItemAdapter);
+        return items;
     }
 
     @Override
@@ -84,6 +99,5 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        //TODO: save data
     }
 }

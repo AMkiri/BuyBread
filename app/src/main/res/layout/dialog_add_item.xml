@@ -15,7 +15,6 @@
         android:layout_marginBottom="8dp"
         android:padding="8dp"
         android:textColor="#000"
-        android:background="#d5d5d5"
         android:gravity="center"/>
 
     <LinearLayout
