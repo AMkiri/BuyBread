@@ -22,4 +22,20 @@ public class ItemToBuy implements Serializable{
     public String getName() {
         return mName;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ItemToBuy itemToBuy = (ItemToBuy) o;
+
+        return mName.equals(itemToBuy.mName);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return mName.hashCode();
+    }
 }

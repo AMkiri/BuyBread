@@ -1,22 +1,19 @@
 package com.droidbreath.buybread.ui.activities;
 
-/*
-* Comments show how to use RecycleView
-* Add to dependencies in build.gradle:
-* compile 'com.android.support:recyclerview-v7:23.4.0'
- */
-
 import android.app.Dialog;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView; //* Add library to use it */
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.EditText;
 
 import com.droidbreath.buybread.R;
-import com.droidbreath.buybread.data.ItemToBuy; //* Create class to hold data of one element */
-import com.droidbreath.buybread.ui.adapters.ItemAdapter; //* Create adapter to connect data and element view */
+import com.droidbreath.buybread.data.DBHelper;
+import com.droidbreath.buybread.data.ItemToBuy;
+import com.droidbreath.buybread.ui.adapters.ItemAdapter;
+import com.droidbreath.buybread.utils.ConstantManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,28 +23,28 @@ public class MainActivity extends AppCompatActivity {
     private Dialog mDialog;
     private EditText mNewItemName;
 
-    //* Declare variables to get access to needed data and classes: */
     private RecyclerView mRecyclerView;
     private ItemAdapter mItemAdapter;
+
+    private DBHelper mDBHelper;
+    private List<ItemToBuy> mItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Add RecycleView tag to main screen:
         mRecyclerView = (RecyclerView) findViewById(R.id.shopping_list);
 
-        // Give it layout manager, so it can position elements correctly:
+        mDBHelper = new DBHelper(this);
+
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(linearLayoutManager);
 
-        // Load data and set adapter:
         List<ItemToBuy> items = loadItems();
         mItemAdapter = new ItemAdapter(items);
         mRecyclerView.setAdapter(mItemAdapter);
 
-        // Some additional things to create new item (make it as u want, if needed):
         mDialog = new Dialog(MainActivity.this);
         mDialog.setTitle("To buy:");
         mDialog.setContentView(R.layout.dialog_add_item);
@@ -77,6 +74,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        if(savedInstanceState != null){
+            if (savedInstanceState.getBoolean(ConstantManager.NEW_ITEM_DIALOG_STATE)){
+                mNewItemName.setText(savedInstanceState.getString(ConstantManager.NEW_ITEM_DIALOG_STRING));
+                mDialog.show();
+            }
+        }
+
     }
 
     /**
@@ -84,20 +88,40 @@ public class MainActivity extends AppCompatActivity {
      * @return list with elements for RecycleView
      */
     private List<ItemToBuy> loadItems() {
-        List<ItemToBuy> items = new ArrayList<>();
-        for (int i = 1; i < 7; i++){
-            items.add(new ItemToBuy("Task #" + i));
-        }
-        return items;
+        mItems = mDBHelper.getAllItems();
+        return mItems;
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
+    /**
+     * Save data to database when activity paused
+     */
     @Override
     protected void onPause() {
         super.onPause();
+
+        List<ItemToBuy> newItems = mItemAdapter.getItems();
+        for(ItemToBuy item : newItems){
+            if(mItems.contains(item)){
+                mDBHelper.updateItem(item);
+            } else {
+                mDBHelper.addItem(item);
+            }
+        }
+
+        for (ItemToBuy item : mItems){
+            if(!newItems.contains(item)){
+                mDBHelper.deleteItem(item);
+            }
+        }
+
+        mItems = newItems;
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putBoolean(ConstantManager.NEW_ITEM_DIALOG_STATE, mDialog.isShowing());
+        outState.putString(ConstantManager.NEW_ITEM_DIALOG_STRING, mNewItemName.getText().toString());
     }
 }
