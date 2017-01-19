@@ -12,28 +12,30 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper{
 
     private static final int DATABASE_VERSION = 1;
-    private static final String DATABASE_NAME = "listDb";
-    private static final String TABLE_ITEMS = "items";
+    private static final String DATABASE_NAME = "LIST_DB";
+    private static final String TABLE_ITEMS = "ITEMS";
 
-    private static final String KEY_ID = "_id";
-    private static final String KEY_NAME = "name";
-    private static final String KEY_STATE = "state";
+    private static final String KEY_ID = "_ID";
+    private static final String KEY_NAME = "NAME";
+    private static final String KEY_STATE = "STATE";
 
-    private SQLiteDatabase mDatabase;
+    private SQLiteDatabase mDatabaseWrite;
+    private SQLiteDatabase mDatabaseRead;
 
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        mDatabase = this.getWritableDatabase();
+        mDatabaseWrite = this.getWritableDatabase();
+        mDatabaseRead = this.getReadableDatabase();
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("create table " + TABLE_ITEMS + "("
+        db.execSQL("create table " + TABLE_ITEMS + " ("
                     + KEY_ID + " integer primary key, "
                     + KEY_NAME + " text, "
                     + KEY_STATE + " integer"
-                    + ")");
+                    + ");");
     }
 
     @Override
@@ -44,32 +46,37 @@ public class DBHelper extends SQLiteOpenHelper{
     }
 
     public List<ItemToBuy> getAllItems(){
-        Cursor cursor = mDatabase.query(true,TABLE_ITEMS,new String[]{KEY_NAME, KEY_STATE}, null, null, null, null, null, null);
-        cursor.moveToFirst();
+        Cursor cursor = mDatabaseRead.query(TABLE_ITEMS, null, null, null, null, null, null);
+        if(cursor == null) return null;
 
-        List<ItemToBuy> result = new ArrayList<>();
-        int nameColumnIndex = cursor.getColumnIndex(KEY_NAME);
-        int stateColumnIndex = cursor.getColumnIndex(KEY_STATE);
+        List<ItemToBuy> result = null;
 
-        while (!cursor.isAfterLast()){
-            ItemToBuy temp = new ItemToBuy(cursor.getString(nameColumnIndex));
-            temp.setDone(cursor.getInt(stateColumnIndex) == 1);
-            result.add(temp);
+        if (cursor.moveToFirst()) {
+            result = new ArrayList<>();
+            int nameColumnIndex = cursor.getColumnIndex(KEY_NAME);
+            int stateColumnIndex = cursor.getColumnIndex(KEY_STATE);
+
+            do {
+                ItemToBuy temp = new ItemToBuy(cursor.getString(nameColumnIndex));
+                temp.setDone(cursor.getInt(stateColumnIndex) == 1);
+                result.add(temp);
+            } while (cursor.moveToNext());
         }
 
+        cursor.close();
         return result;
     }
 
     public void deleteItem(ItemToBuy item) {
-        mDatabase.delete(TABLE_ITEMS, KEY_NAME + " = ?", new String[]{item.getName()});
+        mDatabaseWrite.delete(TABLE_ITEMS, KEY_NAME + "=?", new String[]{item.getName()});
     }
 
     public void addItem(ItemToBuy item) {
-        mDatabase.insert(TABLE_ITEMS, null, parseValues(item));
+        mDatabaseWrite.insert(TABLE_ITEMS, null, parseValues(item));
     }
 
     public void updateItem(ItemToBuy item) {
-        mDatabase.update(TABLE_ITEMS,parseValues(item),KEY_NAME + " = ?", new String[]{item.getName()});
+        mDatabaseWrite.update(TABLE_ITEMS,parseValues(item),KEY_NAME + "=?", new String[]{item.getName()});
     }
 
     private ContentValues parseValues(ItemToBuy item){

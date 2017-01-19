@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private List<ItemToBuy> loadItems() {
         mItems = mDBHelper.getAllItems();
-        return mItems;
+        return null;
     }
 
     /**
